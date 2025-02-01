@@ -33,7 +33,7 @@ def _make_post_request(payload: PostRequest) -> tuple[bool, PostResponse]:
     http_response = requests.post(
         url=f"{URL_BASE}/save/",
         headers={"Authorization": f"Token {READWISE_TOKEN}"},
-        json=payload.dict(),
+        json=payload.model_dump(),
     )
     if http_response.status_code != 429:
         return (http_response.status_code == 200, PostResponse(**http_response.json()))
