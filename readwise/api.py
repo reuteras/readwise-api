@@ -24,6 +24,7 @@ def _make_get_request(params: dict[str, str]) -> GetResponse:
 
     # Respect rate limiting of maximum 20 requests per minute (https://readwise.io/reader_api).
     wait_time = int(http_response.headers["Retry-After"])
+    print(f"Rate limited, waiting for {wait_time} seconds...")
     sleep(wait_time)
     return _make_get_request(params)
 
