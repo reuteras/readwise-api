@@ -35,6 +35,7 @@ class Document(BaseModel):
     parent_id: Optional[str]
     saved_at: str
     last_moved_at: str
+    reading_progress: Optional[int]
 
 
 class GetResponse(BaseModel):
