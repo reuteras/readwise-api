@@ -16,21 +16,25 @@ class Document(BaseModel):
 
     id: str
     url: str
-    title: str
-    author: str
+    title: Optional[str]
+    author: Optional[str]
     source: Optional[str]
     category: str
-    location: str
+    location: Optional[str]
     tags: Optional[dict[str, Tag]]
     site_name: Optional[str]
     word_count: Optional[int]
     created_at: str
     updated_at: str
-    published_date: Optional[str]
+    notes: Optional[str]
+    published_date: Optional[int | str]
     summary: Optional[str]
     image_url: Optional[str]
     content: Any
-    source_url: str
+    source_url: Optional[str]
+    parent_id: Optional[str]
+    saved_at: str
+    last_moved_at: str
 
 
 class GetResponse(BaseModel):
