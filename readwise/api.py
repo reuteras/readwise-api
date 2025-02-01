@@ -1,3 +1,4 @@
+from datetime import datetime
 from os import environ
 from time import sleep
 from typing import Final, Optional
@@ -43,8 +44,9 @@ def _make_post_request(payload: PostRequest) -> tuple[bool, PostResponse]:
 
 
 def get_documents(
-    location: str,
+    location: Optional[str] = None,
     category: Optional[str] = None,
+    updated_after: Optional[datetime] = None,
 ) -> list[Document]:
     """Get a list of documents from Readwise Reader.
 
@@ -57,9 +59,10 @@ def get_documents(
         A list of `Document` objects.
     """
     params = {}
-    if location not in ("new", "later", "shortlist", "archive", "feed"):
-        raise ValueError(f"Parameter 'location' cannot be of value {location!r}")
-    params["location"] = location
+    if location:
+        if location not in ("new", "later", "shortlist", "archive", "feed"):
+            raise ValueError(f"Parameter 'location' cannot be of value {location!r}")
+        params["location"] = location
     if category:
         if category not in (
             "article",
@@ -74,6 +77,8 @@ def get_documents(
         ):
             raise ValueError(f"Parameter 'category' cannot be of value {category!r}")
         params["category"] = category
+    if updated_after:
+        params["updatedAfter"] = updated_after.isoformat()
 
     results: list[Document] = []
     while (response := _make_get_request(params)).next_page_cursor:

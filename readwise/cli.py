@@ -1,4 +1,5 @@
 import json
+from datetime import datetime
 from typing import Optional
 
 import typer
@@ -10,18 +11,26 @@ app = typer.Typer()
 
 
 @app.command()
-def list(location: str, n: Annotated[Optional[int], typer.Option("--number", "-n")] = None) -> None:
+def list(
+    location: Annotated[Optional[str], typer.Option("--location", "-l")] = None,
+    category: Annotated[Optional[str], typer.Option("--category", "-c")] = None,
+    upaded_after: Annotated[Optional[datetime], typer.Option("--updated-after", "-u")] = None,
+    n: Annotated[Optional[int], typer.Option("--number", "-n")] = None,
+) -> None:
     """List documents.
 
     Params:
-        location (str): The document's location, could be one of: new, later, shortlist, archive, feed
+        location (Optional[str]): The document's location, could be one of: new, later, shortlist, archive, feed
+        category (Optional[str]): The document's category, could be one of: article, email, rss, highlight, note, pdf,
+            epub, tweet, video
+        upaded_after (Optional[datetime]): Filter documents updated after a certain date.
         n (Optional[int]): Limits the number of documents to a maximum (100 by default).
 
     Usage:
         $ readwise list new
     """
-    documents = get_documents(location)[:n]
-    fields_to_include = {"title", "id"}
+    documents = get_documents(location, category, upaded_after)[:n]
+    fields_to_include = {"title", "id", "category", "author", "source", "created_at", "updated_at"}
     print(json.dumps([d.dict(include=fields_to_include) for d in documents], indent=2))
 
 
