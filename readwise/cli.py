@@ -30,7 +30,7 @@ def list(
         $ readwise list new
     """
     documents = get_documents(location, category, upaded_after)[:n]
-    fields_to_include = {"title", "id", "category", "author", "source", "created_at", "updated_at"}
+    fields_to_include = {"title", "id", "category", "author", "source", "created_at", "updated_at", "reading_progress"}
     print(json.dumps([d.dict(include=fields_to_include) for d in documents], indent=2))
 
 
