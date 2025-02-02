@@ -1,4 +1,4 @@
-from typing import Any, Optional
+from typing import Optional
 
 from pydantic import BaseModel, Field
 
@@ -30,7 +30,7 @@ class Document(BaseModel):
     published_date: Optional[int | str]
     summary: Optional[str]
     image_url: Optional[str]
-    content: Any
+    content: Optional[str]
     source_url: Optional[str]
     parent_id: Optional[str]
     saved_at: str
