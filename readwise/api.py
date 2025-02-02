@@ -9,110 +9,125 @@ from dotenv import load_dotenv
 from readwise.model import Document, GetResponse, PostRequest, PostResponse
 
 load_dotenv()
-READWISE_TOKEN: Final[str] = environ["READWISE_TOKEN"]
-URL_BASE: Final[str] = "https://readwise.io/api/v3"
 
 
-def _make_get_request(params: dict[str, str]) -> GetResponse:
-    http_response = requests.get(
-        url=f"{URL_BASE}/list/",
-        headers={"Authorization": f"Token {READWISE_TOKEN}"},
-        params=params,
-    )
-    if http_response.status_code != 429:
-        return GetResponse(**http_response.json())
+class ReadwiseReader:
+    """A client for Readwise Reader API."""
 
-    # Respect rate limiting of maximum 20 requests per minute (https://readwise.io/reader_api).
-    wait_time = int(http_response.headers["Retry-After"])
-    print(f"Rate limited, waiting for {wait_time} seconds...")
-    sleep(wait_time)
-    return _make_get_request(params)
+    URL_BASE: Final[str] = "https://readwise.io/api/v3"
 
+    def __init__(self, token: str | None = None) -> None:
+        """Initialize the client with a token.
 
-def _make_post_request(payload: PostRequest) -> tuple[bool, PostResponse]:
-    http_response = requests.post(
-        url=f"{URL_BASE}/save/",
-        headers={"Authorization": f"Token {READWISE_TOKEN}"},
-        json=payload.model_dump(),
-    )
-    if http_response.status_code != 429:
-        return (http_response.status_code == 200, PostResponse(**http_response.json()))
+        Args:
+            token (str): The token to use for authentication
+        """
+        self._token = token
 
-    # Respect rate limiting of maximum 20 requests per minute (https://readwise.io/reader_api).
-    wait_time = int(http_response.headers["Retry-After"])
-    sleep(wait_time)
-    return _make_post_request(payload)
+    @property
+    def token(self) -> str:
+        """Get the token for authentication."""
+        if self._token is None and environ.get("READWISE_TOKEN") is None:
+            raise ValueError("Token is required for authentication")
+        return self._token or environ["READWISE_TOKEN"]
 
+    def _make_get_request(self, params: dict[str, str]) -> GetResponse:
+        http_response = requests.get(
+            url=f"{self.URL_BASE}/list/",
+            headers={"Authorization": f"Token {self.token}"},
+            params=params,
+        )
+        if http_response.status_code != 429:
+            return GetResponse(**http_response.json())
 
-def get_documents(
-    location: Optional[str] = None,
-    category: Optional[str] = None,
-    updated_after: Optional[datetime] = None,
-) -> list[Document]:
-    """Get a list of documents from Readwise Reader.
+        # Respect rate limiting of maximum 20 requests per minute (https://readwise.io/reader_api).
+        wait_time = int(http_response.headers["Retry-After"])
+        print(f"Rate limited, waiting for {wait_time} seconds...")
+        sleep(wait_time)
+        return self._make_get_request(params)
 
-    Params:
-        location (str): The document's location, could be one of: new, later, shortlist, archive, feed
-        category (str): The document's category, could be one of: article, email, rss, highlight, note, pdf, epub,
-            tweet, video
+    def _make_post_request(self, payload: PostRequest) -> tuple[bool, PostResponse]:
+        http_response = requests.post(
+            url=f"{self.URL_BASE}/save/",
+            headers={"Authorization": f"Token {self.token}"},
+            json=payload.model_dump(),
+        )
+        if http_response.status_code != 429:
+            return (http_response.status_code == 200, PostResponse(**http_response.json()))
 
-    Returns:
-        A list of `Document` objects.
-    """
-    params = {}
-    if location:
-        if location not in ("new", "later", "shortlist", "archive", "feed"):
-            raise ValueError(f"Parameter 'location' cannot be of value {location!r}")
-        params["location"] = location
-    if category:
-        if category not in (
-            "article",
-            "email",
-            "rss",
-            "highlight",
-            "note",
-            "pdf",
-            "epub",
-            "tweet",
-            "video",
-        ):
-            raise ValueError(f"Parameter 'category' cannot be of value {category!r}")
-        params["category"] = category
-    if updated_after:
-        params["updatedAfter"] = updated_after.isoformat()
+        # Respect rate limiting of maximum 20 requests per minute (https://readwise.io/reader_api).
+        wait_time = int(http_response.headers["Retry-After"])
+        sleep(wait_time)
+        return self._make_post_request(payload)
 
-    results: list[Document] = []
-    while (response := _make_get_request(params)).next_page_cursor:
-        results.extend(response.results)
-        params["pageCursor"] = response.next_page_cursor
-    else:
-        # Make sure not to forget last response where `next_page_cursor` is None.
-        results.extend(response.results)
+    def get_documents(
+        self,
+        location: Optional[str] = None,
+        category: Optional[str] = None,
+        updated_after: Optional[datetime] = None,
+    ) -> list[Document]:
+        """Get a list of documents from Readwise Reader.
 
-    return results
+        Params:
+            location (str): The document's location, could be one of: new, later, shortlist, archive, feed
+            category (str): The document's category, could be one of: article, email, rss, highlight, note, pdf, epub,
+                tweet, video
 
+        Returns:
+            A list of `Document` objects.
+        """
+        params = {}
+        if location:
+            if location not in ("new", "later", "shortlist", "archive", "feed"):
+                raise ValueError(f"Parameter 'location' cannot be of value {location!r}")
+            params["location"] = location
+        if category:
+            if category not in (
+                "article",
+                "email",
+                "rss",
+                "highlight",
+                "note",
+                "pdf",
+                "epub",
+                "tweet",
+                "video",
+            ):
+                raise ValueError(f"Parameter 'category' cannot be of value {category!r}")
+            params["category"] = category
+        if updated_after:
+            params["updatedAfter"] = updated_after.isoformat()
 
-def get_document_by_id(id: str) -> Document | None:
-    """Get a single documents from Readwise Reader by its ID.
+        results: list[Document] = []
+        while (response := self._make_get_request(params)).next_page_cursor:
+            results.extend(response.results)
+            params["pageCursor"] = response.next_page_cursor
+        else:
+            # Make sure not to forget last response where `next_page_cursor` is None.
+            results.extend(response.results)
 
-    Params:
-        id (str): The document's unique id. Using this parameter it will return just one document, if found.
+        return results
 
-    Returns:
-        A `Document` object if a document with the given ID exists, or None otherwise.
-    """
-    response = _make_get_request({"id": id})
-    if response.count == 1:
-        return response.results[0]
-    else:
-        return None
+    def get_document_by_id(self, id: str) -> Document | None:
+        """Get a single documents from Readwise Reader by its ID.
 
+        Params:
+            id (str): The document's unique id. Using this parameter it will return just one document, if found.
 
-def save_document(url: str) -> tuple[bool, PostResponse]:
-    """Save a document to Readwise Reader.
+        Returns:
+            A `Document` object if a document with the given ID exists, or None otherwise.
+        """
+        response = self._make_get_request({"id": id})
+        if response.count == 1:
+            return response.results[0]
+        else:
+            return None
 
-    Returns:
-        int: Status code of 201 or 200 if document already exist.
-        PostResponse: An object containing ID and Reader URL of the saved document.
-    """
-    return _make_post_request(PostRequest(url=url))
+    def save_document(self, url: str) -> tuple[bool, PostResponse]:
+        """Save a document to Readwise Reader.
+
+        Returns:
+            int: Status code of 201 or 200 if document already exist.
+            PostResponse: An object containing ID and Reader URL of the saved document.
+        """
+        return self._make_post_request(PostRequest(url=url))
