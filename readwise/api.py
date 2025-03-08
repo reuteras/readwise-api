@@ -1,14 +1,14 @@
+"""A client for Readwise Reader API."""
+
 from datetime import datetime
+from http import HTTPStatus
 from os import environ
 from time import sleep
-from typing import Final, Optional
+from typing import Final
 
 import requests
-from dotenv import load_dotenv
 
 from readwise.model import Document, GetResponse, PostRequest, PostResponse
-
-load_dotenv()
 
 
 class ReadwiseReader:
@@ -22,7 +22,7 @@ class ReadwiseReader:
         Args:
             token (str): The token to use for authentication
         """
-        self._token = token
+        self._token: str | None = token
 
     @property
     def token(self) -> str:
@@ -32,28 +32,28 @@ class ReadwiseReader:
         return self._token or environ["READWISE_TOKEN"]
 
     def _make_get_request(self, params: dict[str, str]) -> GetResponse:
-        http_response = requests.get(
+        http_response: requests.Response = requests.get(
             url=f"{self.URL_BASE}/list/",
             headers={"Authorization": f"Token {self.token}"},
             params=params,
         )
-        if http_response.status_code != 429:
+        if http_response.status_code != HTTPStatus.TOO_MANY_REQUESTS:
             return GetResponse(**http_response.json())
 
         # Respect rate limiting of maximum 20 requests per minute (https://readwise.io/reader_api).
         wait_time = int(http_response.headers["Retry-After"])
         print(f"Rate limited, waiting for {wait_time} seconds...")
         sleep(wait_time)
-        return self._make_get_request(params)
+        return self._make_get_request(params=params)
 
     def _make_post_request(self, payload: PostRequest) -> tuple[bool, PostResponse]:
-        http_response = requests.post(
+        http_response: requests.Response = requests.post(
             url=f"{self.URL_BASE}/save/",
             headers={"Authorization": f"Token {self.token}"},
             json=payload.model_dump(),
         )
-        if http_response.status_code != 429:
-            return (http_response.status_code == 200, PostResponse(**http_response.json()))
+        if http_response.status_code != HTTPStatus.TOO_MANY_REQUESTS:
+            return (http_response.status_code == HTTPStatus.OK, PostResponse(**http_response.json()))
 
         # Respect rate limiting of maximum 20 requests per minute (https://readwise.io/reader_api).
         wait_time = int(http_response.headers["Retry-After"])
@@ -62,9 +62,9 @@ class ReadwiseReader:
 
     def get_documents(
         self,
-        location: Optional[str] = None,
-        category: Optional[str] = None,
-        updated_after: Optional[datetime] = None,
+        location: str | None = None,
+        category: str | None = None,
+        updated_after: datetime | None = None,
     ) -> list[Document]:
         """Get a list of documents from Readwise Reader.
 
@@ -102,9 +102,8 @@ class ReadwiseReader:
         while (response := self._make_get_request(params)).next_page_cursor:
             results.extend(response.results)
             params["pageCursor"] = response.next_page_cursor
-        else:
-            # Make sure not to forget last response where `next_page_cursor` is None.
-            results.extend(response.results)
+        # Make sure not to forget last response where `next_page_cursor` is None.
+        results.extend(response.results)
 
         return results
 
@@ -117,7 +116,7 @@ class ReadwiseReader:
         Returns:
             A `Document` object if a document with the given ID exists, or None otherwise.
         """
-        response = self._make_get_request({"id": id})
+        response: GetResponse = self._make_get_request(params={"id": id})
         if response.count == 1:
             return response.results[0]
         else:
@@ -130,4 +129,4 @@ class ReadwiseReader:
             int: Status code of 201 or 200 if document already exist.
             PostResponse: An object containing ID and Reader URL of the saved document.
         """
-        return self._make_post_request(PostRequest(url=url))
+        return self._make_post_request(payload=PostRequest(url=url))

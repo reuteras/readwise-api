@@ -1,4 +1,4 @@
-from typing import Optional
+"""Models for the Readwise API."""
 
 from pydantic import BaseModel, Field
 
@@ -16,26 +16,26 @@ class Document(BaseModel):
 
     id: str
     url: str
-    title: Optional[str]
-    author: Optional[str]
-    source: Optional[str]
+    title: str | None
+    author: str | None
+    source: str | None
     category: str
-    location: Optional[str]
-    tags: Optional[dict[str, Tag]]
-    site_name: Optional[str]
-    word_count: Optional[int]
+    location: str | None
+    tags: dict[str, Tag] | None
+    site_name: str | None
+    word_count: int | None
     created_at: str
     updated_at: str
-    notes: Optional[str]
-    published_date: Optional[int | str]
-    summary: Optional[str]
-    image_url: Optional[str]
-    content: Optional[str]
-    source_url: Optional[str]
-    parent_id: Optional[str]
+    notes: str | None
+    published_date: int | str | None
+    summary: str | None
+    image_url: str | None
+    content: str | None
+    source_url: str | None
+    parent_id: str | None
     saved_at: str
     last_moved_at: str
-    reading_progress: Optional[float]
+    reading_progress: float | None
 
 
 class GetResponse(BaseModel):
@@ -43,13 +43,13 @@ class GetResponse(BaseModel):
 
     Fields:
         count (int): The number of returned documents (max 100).
-        next_page_cursor (Optional[str]): If there are more the 100 documents, a `next_page_cursor` is added to the
+        next_page_cursor (str | None): If there are more the 100 documents, a `next_page_cursor` is added to the
             response, which can be passed as a starting point for an additional request.
         results (list[Document]): The list of documents from Readwise.
     """
 
     count: int
-    next_page_cursor: Optional[str] = Field(..., alias="nextPageCursor")
+    next_page_cursor: str | None = Field(..., alias="nextPageCursor")
     results: list[Document]
 
 
@@ -59,37 +59,37 @@ class PostRequest(BaseModel):
     Fields:
         url (str): The document's unique URL. If you don't have one, you can provide a made up value such as
             https://yourapp.com#document1
-        html (Optional[str]): The document's content, in valid html (see examples). If you don't provide this, we will
+        html (str | None): The document's content, in valid html (see examples). If you don't provide this, we will
             try to scrape the URL you provided to fetch html from the open web.
         should_clean_html  (Optional[bool]): Only valid when html is provided. Pass true to have us automatically
             clean the html and parse the metadata (title/author) of the document for you. By default, this option is
             false.
-        title (Optional[str]): The document's title, it will overwrite the original title of the document.
-        author (Optional[str]): The document's author, it will overwrite the original author (if found during the
+        title (str | None): The document's title, it will overwrite the original title of the document.
+        author (str | None): The document's author, it will overwrite the original author (if found during the
             parsing step).
-        summary (Optional[str]): Summary of the document.
-        published_date (Optional[str]): A datetime representing when the document was published in the ISO 8601
+        summary (str | None): Summary of the document.
+        published_date (str | None): A datetime representing when the document was published in the ISO 8601
             format; default timezone is UTC. Example: "2020-07-14T20:11:24+00:00"
-        image_url (Optional[str]): An image URL to use as cover image.
-        location (Optional[str]): One of: new, later, archive or feed. Default is new.
+        image_url (str | None): An image URL to use as cover image.
+        location (str | None): One of: new, later, archive or feed. Default is new.
             Represents the initial location of the document (previously called triage_status). Note: if you try to use
             a location the user doesn't have enabled in their settings, this value will be set to their default
             location.
-        saved_using (Optional[str]): This value represents the source of the document
+        saved_using (str | None): This value represents the source of the document
         tags (Optional[list[str]]): A list of strings containing tags, example: ["tag1", "tag2"]
     """
 
     url: str
-    html: Optional[str] = None
-    should_clean_html: Optional[bool] = None
-    title: Optional[str] = None
-    author: Optional[str] = None
-    summary: Optional[str] = None
-    published_date: Optional[str] = None
-    image_url: Optional[str] = None
-    location: Optional[str] = None
-    saved_using: Optional[str] = None
-    tags: Optional[list[str]] = None
+    html: str | None = None
+    should_clean_html: bool | None = None
+    title: str | None = None
+    author: str | None = None
+    summary: str | None = None
+    published_date: str | None = None
+    image_url: str | None = None
+    location: str | None = None
+    saved_using: str | None = None
+    tags: list[str] | None = None
 
 
 class PostResponse(BaseModel):
