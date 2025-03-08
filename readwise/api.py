@@ -36,6 +36,7 @@ class ReadwiseReader:
             url=f"{self.URL_BASE}/list/",
             headers={"Authorization": f"Token {self.token}"},
             params=params,
+            timeout=30,
         )
         if http_response.status_code != HTTPStatus.TOO_MANY_REQUESTS:
             return GetResponse(**http_response.json())
@@ -51,6 +52,7 @@ class ReadwiseReader:
             url=f"{self.URL_BASE}/save/",
             headers={"Authorization": f"Token {self.token}"},
             json=payload.model_dump(),
+            timeout=30,
         )
         if http_response.status_code != HTTPStatus.TOO_MANY_REQUESTS:
             return (http_response.status_code == HTTPStatus.OK, PostResponse(**http_response.json()))
@@ -65,6 +67,7 @@ class ReadwiseReader:
         location: str | None = None,
         category: str | None = None,
         updated_after: datetime | None = None,
+        withHtmlContent: bool = False
     ) -> list[Document]:
         """Get a list of documents from Readwise Reader.
 
@@ -97,6 +100,8 @@ class ReadwiseReader:
             params["category"] = category
         if updated_after:
             params["updatedAfter"] = updated_after.isoformat()
+        if withHtmlContent:
+            params["withHtmlContent"] = True
 
         results: list[Document] = []
         while (response := self._make_get_request(params)).next_page_cursor:
@@ -107,20 +112,19 @@ class ReadwiseReader:
 
         return results
 
-    def get_document_by_id(self, id: str) -> Document | None:
+    def get_document_by_id(self, doc_id: str) -> Document | None:
         """Get a single documents from Readwise Reader by its ID.
 
         Params:
-            id (str): The document's unique id. Using this parameter it will return just one document, if found.
+            doc_id (str): The document's unique id. Using this parameter it will return just one document, if found.
 
         Returns:
             A `Document` object if a document with the given ID exists, or None otherwise.
         """
-        response: GetResponse = self._make_get_request(params={"id": id})
+        response: GetResponse = self._make_get_request(params={"id": doc_id})
         if response.count == 1:
             return response.results[0]
-        else:
-            return None
+        return None
 
     def save_document(self, url: str) -> tuple[bool, PostResponse]:
         """Save a document to Readwise Reader.
