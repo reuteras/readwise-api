@@ -200,9 +200,9 @@ class ReadwiseReader:
             success, result = self.search_document(url=url)
             if not success:
                 return False, {"error": f"Could not find document with URL {url}"}
-            document_id = result.id
+            document_id = result.id # type: ignore
 
-        return self._make_delete_request(payload=DeleteRequest(id=document_id))
+        return self._make_delete_request(payload=DeleteRequest(id=str(document_id)))
 
     def update_document_location(self, document_id: str, location: str) -> tuple[bool, dict | UpdateResponse]:
         """Update a document's location in Readwise Reader.
