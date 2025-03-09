@@ -161,22 +161,37 @@ class ReadwiseReader:
         sleep(wait_time)
         return self._make_delete_request(payload)
 
-    def _make_update_request(self, payload: UpdateRequest) -> tuple[bool, UpdateResponse]:
+    def _make_update_request(self, payload: UpdateRequest) -> tuple[bool, dict | UpdateResponse]:
         """Make an UPDATE request to the Readwise API."""
-        http_response: requests.Response = requests.post(
-            url=f"{self.URL_BASE}/update/",
-            headers={"Authorization": f"Token {self.token}"},
-            json=payload.model_dump(),
-            timeout=30,
-        )
-        if http_response.status_code != HTTPStatus.TOO_MANY_REQUESTS:
-            return (http_response.status_code == HTTPStatus.OK, UpdateResponse(**http_response.json()))
-
-        # Respect rate limiting
-        wait_time = int(http_response.headers["Retry-After"])
-        print(f"Rate limited, waiting for {wait_time} seconds...")
-        sleep(wait_time)
-        return self._make_update_request(payload)
+        try:
+            http_response: requests.Response = requests.post(
+                url=f"{self.URL_BASE}/update/",
+                headers={"Authorization": f"Token {self.token}"},
+                json=payload.model_dump(),
+                timeout=30,
+            )
+            
+            if http_response.status_code == HTTPStatus.TOO_MANY_REQUESTS:
+                # Respect rate limiting
+                wait_time = int(http_response.headers["Retry-After"])
+                print(f"Rate limited, waiting for {wait_time} seconds...")
+                sleep(wait_time)
+                return self._make_update_request(payload)
+            
+            # Try to parse the response as JSON
+            try:
+                response_json = http_response.json()
+                if http_response.status_code == HTTPStatus.OK:
+                    return (True, UpdateResponse(**response_json))
+                else:
+                    return (False, {"error": f"API error: {http_response.status_code}", "details": response_json})
+            except ValueError as json_error:
+                # Log the raw response for debugging
+                error_msg = f"Failed to parse API response: {json_error}. Raw response: {http_response.text[:200]}"
+                return (False, {"error": error_msg})
+        
+        except Exception as e:
+            return (False, {"error": f"Request failed: {e}"})
 
     def delete_document(
         self, url: str | None = None, document_id: str | None = None
