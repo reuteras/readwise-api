@@ -161,13 +161,20 @@ class ReadwiseReader:
         sleep(wait_time)
         return self._make_delete_request(payload)
 
-    def _make_update_request(self, payload: UpdateRequest) -> tuple[bool, dict | UpdateResponse]:
-        """Make an UPDATE request to the Readwise API."""
+    def _make_update_request(self, payload: UpdateRequest) -> tuple[bool, UpdateResponse]:
+        """Make an UPDATE request to the Readwise API using PATCH method.
+        
+        Args:
+            payload: UpdateRequest object with document id and fields to update
+            
+        Returns:
+            Tuple of (success, response)
+        """
         try:
-            http_response: requests.Response = requests.post(
-                url=f"{self.URL_BASE}/update/",
+            http_response: requests.Response = requests.patch(
+                url=f"{self.URL_BASE}/update/{payload.id}/",
                 headers={"Authorization": f"Token {self.token}"},
-                json=payload.model_dump(),
+                json=payload.model_dump(exclude={"id"}),  # Exclude id from payload as it's in the URL
                 timeout=30,
             )
             
@@ -182,17 +189,21 @@ class ReadwiseReader:
             try:
                 response_json = http_response.json()
                 if http_response.status_code == HTTPStatus.OK:
-                    return (True, UpdateResponse(**response_json))
+                    return (True, UpdateResponse(success=True, message="Document updated successfully"))
                 else:
-                    return (False, {"error": f"API error: {http_response.status_code}", "details": response_json})
+                    return (False, UpdateResponse(success=False, message=f"API error: {response_json}"))
             except ValueError as json_error:
-                # Log the raw response for debugging
-                error_msg = f"Failed to parse API response: {json_error}. Raw response: {http_response.text[:200]}"
-                return (False, {"error": error_msg})
+                # The response might not be JSON
+                if http_response.status_code == HTTPStatus.OK:
+                    # Successful but not JSON response
+                    return (True, UpdateResponse(success=True, message="Document updated successfully"))
+                else:
+                    error_msg = f"Failed to parse API response: {json_error}. Status: {http_response.status_code}"
+                    return (False, UpdateResponse(success=False, message=error_msg))
         
         except Exception as e:
-            return (False, {"error": f"Request failed: {e}"})
-
+            return (False, UpdateResponse(success=False, message=f"Request failed: {e}"))
+        
     def delete_document(
         self, url: str | None = None, document_id: str | None = None
     ) -> tuple[bool, dict | DeleteResponse]:
@@ -234,8 +245,36 @@ class ReadwiseReader:
         if location not in ("new", "later", "archive"):
             return False, {"error": f"Invalid location: {location}. Must be one of: 'new', 'later', 'archive'"}
 
-        return self._make_update_request(payload=UpdateRequest(id=document_id, location=location))
-
+        try:
+            # According to API docs: PATCH to https://readwise.io/api/v3/update/<document_id>/
+            http_response: requests.Response = requests.patch(
+                url=f"{self.URL_BASE}/update/{document_id}/",
+                headers={"Authorization": f"Token {self.token}"},
+                json={"location": location},
+                timeout=30,
+            )
+            
+            if http_response.status_code == HTTPStatus.TOO_MANY_REQUESTS:
+                # Respect rate limiting
+                wait_time = int(http_response.headers["Retry-After"])
+                print(f"Rate limited, waiting for {wait_time} seconds...")
+                sleep(wait_time)
+                return self.update_document_location(document_id=document_id, location=location)
+            
+            # Try to parse the response as JSON
+            try:
+                response_json = http_response.json()
+                if http_response.status_code == HTTPStatus.OK:
+                    return (True, UpdateResponse(success=True, message=f"Location updated to {location}"))
+                else:
+                    return (False, {"error": f"API error: {http_response.status_code}", "details": response_json})
+            except ValueError as json_error:
+                error_msg = f"Failed to parse API response: {json_error}. Status code: {http_response.status_code}, Raw response: {http_response.text[:200]}"
+                return (False, {"error": error_msg})
+        
+        except Exception as e:
+            return (False, {"error": f"Request failed: {e}"})
+        
     def search_document(self, url: str) -> tuple[bool, dict | Document]:
         """Search for a document by URL in Readwise Reader.
 
