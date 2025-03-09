@@ -179,7 +179,7 @@ class ReadwiseReader:
         return self._make_update_request(payload)
 
     def delete_document(
-        self, url: str | None = None, document_id: str = ""
+        self, url: str | None = None, document_id: str | None = None
     ) -> tuple[bool, dict | DeleteResponse]:
         """Delete a document from Readwise Reader.
 
@@ -192,7 +192,7 @@ class ReadwiseReader:
                 - success: Boolean indicating if the operation was successful
                 - response: Response data or error information
         """
-        if document_id == "" and url is None:
+        if document_id is None and url is None:
             return False, {"error": "Either url or document_id must be provided"}
 
         # If we have a URL but no document_id, search for the document first
