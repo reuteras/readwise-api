@@ -121,16 +121,16 @@ class ReadwiseReader:
 
         return results
 
-    def get_document_by_id(self, doc_id: str) -> Document | None:
+    def get_document_by_id(self, id: str) -> Document | None:
         """Get a single documents from Readwise Reader by its ID.
 
         Params:
-            doc_id (str): The document's unique id. Using this parameter it will return just one document, if found.
+            id (str): The document's unique id. Using this parameter it will return just one document, if found.
 
         Returns:
             A `Document` object if a document with the given ID exists, or None otherwise.
         """
-        response: GetResponse = self._make_get_request(params={"id": doc_id})
+        response: GetResponse = self._make_get_request(params={"id": id})
         if response.count == 1:
             return response.results[0]
         return None
@@ -179,7 +179,7 @@ class ReadwiseReader:
         return self._make_update_request(payload)
 
     def delete_document(
-        self, url: str | None = None, document_id: str | None = None
+        self, url: str | None = None, document_id: str = ""
     ) -> tuple[bool, dict | DeleteResponse]:
         """Delete a document from Readwise Reader.
 
@@ -192,7 +192,7 @@ class ReadwiseReader:
                 - success: Boolean indicating if the operation was successful
                 - response: Response data or error information
         """
-        if document_id is None and url is None:
+        if document_id == "" and url is None:
             return False, {"error": "Either url or document_id must be provided"}
 
         # If we have a URL but no document_id, search for the document first

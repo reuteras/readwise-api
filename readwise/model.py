@@ -102,3 +102,26 @@ class PostResponse(BaseModel):
 
     id: str
     url: str
+
+class DeleteRequest(BaseModel):
+    """A request to delete a document from Readwise Reader."""
+    
+    id: str
+
+class DeleteResponse(BaseModel):
+    """A response from the Readwise API for DELETE requests."""
+    
+    success: bool
+    message: str | None = None
+
+class UpdateRequest(BaseModel):
+    """A request to update a document's location in Readwise Reader."""
+    
+    id: str
+    location: str
+    
+class UpdateResponse(BaseModel):
+    """A response from the Readwise API for UPDATE requests."""
+    
+    success: bool
+    message: str | None = None
