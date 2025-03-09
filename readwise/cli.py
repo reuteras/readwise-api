@@ -34,7 +34,16 @@ def list(
     reader = ReadwiseReader(token=os.getenv(key="READWISE_TOKEN"))
 
     documents = reader.get_documents(location=location, category=category, updated_after=updated_after)[:n]
-    fields_to_include: set[str] = {"title", "id", "category", "author", "source", "created_at", "updated_at", "reading_progress"}
+    fields_to_include: set[str] = {
+        "title",
+        "id",
+        "category",
+        "author",
+        "source",
+        "created_at",
+        "updated_at",
+        "reading_progress",
+    }
     print(json.dumps(obj=[d.dict(include=fields_to_include) for d in documents], indent=2))
 
 
@@ -47,7 +56,7 @@ def get(id: str) -> None:
     """
     reader = ReadwiseReader(token=os.getenv(key="READWISE_TOKEN"))
 
-    doc = reader.get_document_by_id(id=id)
+    doc = reader.get_document_by_id(doc_id=id)
     if doc:
         print(doc.model_dump_json(indent=2))
     else:

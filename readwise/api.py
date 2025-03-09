@@ -8,7 +8,16 @@ from typing import Final
 
 import requests
 
-from readwise.model import Document, GetResponse, PostRequest, PostResponse
+from readwise.model import (
+    DeleteRequest,
+    DeleteResponse,
+    Document,
+    GetResponse,
+    PostRequest,
+    PostResponse,
+    UpdateRequest,
+    UpdateResponse,
+)
 
 
 class ReadwiseReader:
@@ -67,7 +76,7 @@ class ReadwiseReader:
         location: str | None = None,
         category: str | None = None,
         updated_after: datetime | None = None,
-        withHtmlContent: bool = False
+        withHtmlContent: bool = False,
     ) -> list[Document]:
         """Get a list of documents from Readwise Reader.
 
@@ -134,3 +143,96 @@ class ReadwiseReader:
             PostResponse: An object containing ID and Reader URL of the saved document.
         """
         return self._make_post_request(payload=PostRequest(url=url))
+
+    def _make_delete_request(self, payload: DeleteRequest) -> tuple[bool, DeleteResponse]:
+        """Make a DELETE request to the Readwise API."""
+        http_response: requests.Response = requests.delete(
+            url=f"{self.URL_BASE}/delete/",
+            headers={"Authorization": f"Token {self.token}"},
+            json=payload.model_dump(),
+            timeout=30,
+        )
+        if http_response.status_code != HTTPStatus.TOO_MANY_REQUESTS:
+            return (http_response.status_code == HTTPStatus.OK, DeleteResponse(**http_response.json()))
+
+        # Respect rate limiting
+        wait_time = int(http_response.headers["Retry-After"])
+        print(f"Rate limited, waiting for {wait_time} seconds...")
+        sleep(wait_time)
+        return self._make_delete_request(payload)
+
+    def _make_update_request(self, payload: UpdateRequest) -> tuple[bool, UpdateResponse]:
+        """Make an UPDATE request to the Readwise API."""
+        http_response: requests.Response = requests.post(
+            url=f"{self.URL_BASE}/update/",
+            headers={"Authorization": f"Token {self.token}"},
+            json=payload.model_dump(),
+            timeout=30,
+        )
+        if http_response.status_code != HTTPStatus.TOO_MANY_REQUESTS:
+            return (http_response.status_code == HTTPStatus.OK, UpdateResponse(**http_response.json()))
+
+        # Respect rate limiting
+        wait_time = int(http_response.headers["Retry-After"])
+        print(f"Rate limited, waiting for {wait_time} seconds...")
+        sleep(wait_time)
+        return self._make_update_request(payload)
+
+    def delete_document(
+        self, url: str | None = None, document_id: str | None = None
+    ) -> tuple[bool, dict | DeleteResponse]:
+        """Delete a document from Readwise Reader.
+
+        Args:
+            url: URL of the document to delete (either url or document_id must be provided)
+            document_id: ID of the document to delete
+
+        Returns:
+            Tuple of (success, response)
+                - success: Boolean indicating if the operation was successful
+                - response: Response data or error information
+        """
+        if document_id is None and url is None:
+            return False, {"error": "Either url or document_id must be provided"}
+
+        # If we have a URL but no document_id, search for the document first
+        if document_id is None and url is not None:
+            success, result = self.search_document(url=url)
+            if not success:
+                return False, {"error": f"Could not find document with URL {url}"}
+            document_id = result.id
+
+        return self._make_delete_request(payload=DeleteRequest(id=document_id))
+
+    def update_document_location(self, document_id: str, location: str) -> tuple[bool, dict | UpdateResponse]:
+        """Update a document's location in Readwise Reader.
+
+        Args:
+            document_id: ID of the document to update
+            location: New location ('new' for inbox, 'later', 'archive')
+
+        Returns:
+            Tuple of (success, response)
+                - success: Boolean indicating if the operation was successful
+                - response: Response data or error information
+        """
+        if location not in ("new", "later", "archive"):
+            return False, {"error": f"Invalid location: {location}. Must be one of: 'new', 'later', 'archive'"}
+
+        return self._make_update_request(payload=UpdateRequest(id=document_id, location=location))
+
+    def search_document(self, url: str) -> tuple[bool, dict | Document]:
+        """Search for a document by URL in Readwise Reader.
+
+        Args:
+            url: URL to search for
+
+        Returns:
+            Tuple of (success, document_data)
+                - success: Boolean indicating if the document was found
+                - document_data: Document information or error message
+        """
+        response: GetResponse = self._make_get_request(params={"url": url})
+        if response.count > 0:
+            return True, response.results[0]
+        return False, {"error": f"No document found with URL {url}"}
