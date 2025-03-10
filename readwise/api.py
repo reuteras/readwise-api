@@ -147,7 +147,7 @@ class ReadwiseReader:
     def _make_delete_request(self, payload: DeleteRequest) -> tuple[bool, DeleteResponse]:
         """Make a DELETE request to the Readwise API."""
         http_response: requests.Response = requests.delete(
-            url=f"{self.URL_BASE}/delete/",
+            url=f"{self.URL_BASE}/delete/{payload['id']}/",
             headers={"Authorization": f"Token {self.token}"},
             json=payload.model_dump(),
             timeout=30,
