@@ -37,8 +37,8 @@ class Document(BaseModel):
     last_moved_at: str
     reading_progress: float | None
     notes: str
-    first_opened_at: str
-    last_opened_at: str
+    first_opened_at: str | None
+    last_opened_at: str | None
 
 
 class GetResponse(BaseModel):
