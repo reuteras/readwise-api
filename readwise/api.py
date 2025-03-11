@@ -163,10 +163,10 @@ class ReadwiseReader:
 
     def _make_update_request(self, payload: UpdateRequest) -> tuple[bool, UpdateResponse]:
         """Make an UPDATE request to the Readwise API using PATCH method.
-        
+
         Args:
             payload: UpdateRequest object with document id and fields to update
-            
+
         Returns:
             Tuple of (success, response)
         """
@@ -177,14 +177,14 @@ class ReadwiseReader:
                 json=payload.model_dump(exclude={"id"}),  # Exclude id from payload as it's in the URL
                 timeout=30,
             )
-            
+
             if http_response.status_code == HTTPStatus.TOO_MANY_REQUESTS:
                 # Respect rate limiting
                 wait_time = int(http_response.headers["Retry-After"])
                 print(f"Rate limited, waiting for {wait_time} seconds...")
                 sleep(wait_time)
                 return self._make_update_request(payload)
-            
+
             # Try to parse the response as JSON
             try:
                 response_json = http_response.json()
@@ -200,10 +200,10 @@ class ReadwiseReader:
                 else:
                     error_msg = f"Failed to parse API response: {json_error}. Status: {http_response.status_code}"
                     return (False, UpdateResponse(success=False, message=error_msg))
-        
+
         except Exception as e:
             return (False, UpdateResponse(success=False, message=f"Request failed: {e}"))
-        
+
     def delete_document(
         self, url: str | None = None, document_id: str | None = None
     ) -> tuple[bool, dict | DeleteResponse]:
@@ -226,7 +226,7 @@ class ReadwiseReader:
             success, result = self.search_document(url=url)
             if not success:
                 return False, {"error": f"Could not find document with URL {url}"}
-            document_id = result.id # type: ignore
+            document_id = result.id  # type: ignore
 
         return self._make_delete_request(payload=DeleteRequest(id=str(document_id)))
 
@@ -253,14 +253,14 @@ class ReadwiseReader:
                 json={"location": location},
                 timeout=30,
             )
-            
+
             if http_response.status_code == HTTPStatus.TOO_MANY_REQUESTS:
                 # Respect rate limiting
                 wait_time = int(http_response.headers["Retry-After"])
                 print(f"Rate limited, waiting for {wait_time} seconds...")
                 sleep(wait_time)
                 return self.update_document_location(document_id=document_id, location=location)
-            
+
             # Try to parse the response as JSON
             try:
                 response_json = http_response.json()
@@ -271,10 +271,10 @@ class ReadwiseReader:
             except ValueError as json_error:
                 error_msg = f"Failed to parse API response: {json_error}. Status code: {http_response.status_code}, Raw response: {http_response.text[:200]}"
                 return (False, {"error": error_msg})
-        
+
         except Exception as e:
             return (False, {"error": f"Request failed: {e}"})
-        
+
     def search_document(self, url: str) -> tuple[bool, dict | Document]:
         """Search for a document by URL in Readwise Reader.
 
