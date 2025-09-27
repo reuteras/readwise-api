@@ -1,6 +1,6 @@
-![logo](https://github.com/floscha/readwise-api/raw/main/logo.png)
-
 # Readwise API
+
+![logo](https://github.com/floscha/readwise-api/raw/main/logo.png)
 
 An unofficial Python client for the [Readwise Reader API](https://readwise.io/reader_api).
 
