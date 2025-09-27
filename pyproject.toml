@@ -3,7 +3,7 @@ name = "readwise-api"
 version = "0.3.0"
 description = "An unofficial Python client for the Readwise Reader API."
 authors = [{ name = "Florian Schäfer", email = "florian.joh.schaefer@gmail.com" }]
-requires-python = "~=3.11"
+requires-python = ">=3.11, <4"
 readme = "README.md"
 license = "MIT"
 dependencies = [
