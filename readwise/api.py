@@ -51,9 +51,7 @@ def _append_query_param(url: str, param_name: str, param_value: str) -> str:
     new_query = urlencode(query_params, doseq=True)
 
     # Reconstruct the URL
-    return urlunparse(
-        (parsed.scheme, parsed.netloc, parsed.path, parsed.params, new_query, parsed.fragment)
-    )
+    return urlunparse((parsed.scheme, parsed.netloc, parsed.path, parsed.params, new_query, parsed.fragment))
 
 
 class ReadwiseReader:
