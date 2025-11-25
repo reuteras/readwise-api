@@ -74,8 +74,8 @@ def save(url: str) -> None:
         $ readwise save "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
     """
     reader = ReadwiseReader(token=os.getenv(key="READWISE_TOKEN"))
-    document_already_exists, document_info = reader.save_document(url=url)
-    if document_already_exists:
-        print(f"This document has already been saved earlier with ID {document_info.id!r}.")
+    success, document_info = reader.save_document(url=url)
+    if success and document_info is not None:
+        print(f"Document saved with ID {document_info.id!r} at {document_info.url!r}.")
     else:
-        print(f"Saved new document {document_info.id!r}.")
+        print(f"Failed to save document from {url!r}. Please check the URL and try again.")

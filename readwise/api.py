@@ -90,20 +90,32 @@ class ReadwiseReader:
         sleep(wait_time)
         return self._make_get_request(params=params)
 
-    def _make_post_request(self, payload: PostRequest) -> tuple[bool, PostResponse]:
+    def _make_post_request(self, payload: PostRequest) -> tuple[bool, PostResponse | None]:
         http_response: requests.Response = requests.post(
             url=f"{self.URL_BASE}/save/",
             headers={"Authorization": f"Token {self.token}"},
             json=payload.model_dump(),
             timeout=30,
         )
-        if http_response.status_code != HTTPStatus.TOO_MANY_REQUESTS:
-            return (http_response.status_code == HTTPStatus.OK, PostResponse(**http_response.json()))
+        if http_response.status_code == HTTPStatus.TOO_MANY_REQUESTS:
+            # Respect rate limiting of maximum 20 requests per minute (https://readwise.io/reader_api).
+            wait_time = int(http_response.headers["Retry-After"])
+            sleep(wait_time)
+            return self._make_post_request(payload)
 
-        # Respect rate limiting of maximum 20 requests per minute (https://readwise.io/reader_api).
-        wait_time = int(http_response.headers["Retry-After"])
-        sleep(wait_time)
-        return self._make_post_request(payload)
+        # Handle success responses (200 OK or 201 Created)
+        if http_response.status_code in (HTTPStatus.OK, HTTPStatus.CREATED):
+            try:
+                return (True, PostResponse(**http_response.json()))
+            except ValueError as e:
+                # If JSON parsing/validation fails, log and return False
+                print(f"Warning: Failed to parse PostResponse: {e}. Status code: {http_response.status_code}")
+                return (False, None)
+        else:
+            # For non-success responses, log the error and return False
+            error_msg = http_response.text[:500] if http_response.text else "No error details"
+            print(f"Error: API returned status {http_response.status_code}: {error_msg}")
+            return (False, None)
 
     def get_documents(
         self,
@@ -184,7 +196,7 @@ class ReadwiseReader:
         tags: list[str] | None = None,
         notes: str | None = None,
         should_clean_html: bool = False,
-    ) -> tuple[bool, PostResponse]:
+    ) -> tuple[bool, PostResponse | None]:
         """Save a document to Readwise Reader.
 
         Args:
@@ -247,7 +259,7 @@ class ReadwiseReader:
 
         return self._make_post_request(payload=PostRequest(**payload_dict))
 
-    def _make_delete_request(self, payload: DeleteRequest) -> tuple[bool, DeleteResponse]:
+    def _make_delete_request(self, payload: DeleteRequest) -> tuple[bool, DeleteResponse | None]:
         """Make a DELETE request to the Readwise API."""
         http_response: requests.Response = requests.delete(
             url=f"{self.URL_BASE}/delete/{payload.id}/",
@@ -255,14 +267,29 @@ class ReadwiseReader:
             json=payload.model_dump(),
             timeout=30,
         )
-        if http_response.status_code != HTTPStatus.TOO_MANY_REQUESTS:
-            return (http_response.status_code == HTTPStatus.OK, DeleteResponse(**http_response.json()))
+        if http_response.status_code == HTTPStatus.TOO_MANY_REQUESTS:
+            # Respect rate limiting
+            wait_time = int(http_response.headers["Retry-After"])
+            print(f"Rate limited, waiting for {wait_time} seconds...")
+            sleep(wait_time)
+            return self._make_delete_request(payload)
 
-        # Respect rate limiting
-        wait_time = int(http_response.headers["Retry-After"])
-        print(f"Rate limited, waiting for {wait_time} seconds...")
-        sleep(wait_time)
-        return self._make_delete_request(payload)
+        # Handle success responses (200 OK or 204 No Content)
+        if http_response.status_code in (HTTPStatus.OK, HTTPStatus.NO_CONTENT):
+            try:
+                # 204 No Content won't have a response body
+                if http_response.status_code == HTTPStatus.NO_CONTENT:
+                    return (True, DeleteResponse(success=True, message="Document deleted successfully"))
+                return (True, DeleteResponse(**http_response.json()))
+            except ValueError as e:
+                # If JSON parsing/validation fails, log and return False
+                print(f"Warning: Failed to parse DeleteResponse: {e}. Status code: {http_response.status_code}")
+                return (False, None)
+        else:
+            # For non-success responses, log the error and return False
+            error_msg = http_response.text[:500] if http_response.text else "No error details"
+            print(f"Error: API returned status {http_response.status_code}: {error_msg}")
+            return (False, None)
 
     def _make_update_request(self, payload: UpdateRequest) -> tuple[bool, UpdateResponse]:
         """Make an UPDATE request to the Readwise API using PATCH method.
