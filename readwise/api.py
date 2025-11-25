@@ -5,6 +5,7 @@ from http import HTTPStatus
 from os import environ
 from time import sleep
 from typing import Final
+from urllib.parse import parse_qs, urlencode, urlparse, urlunparse
 
 import requests
 
@@ -18,6 +19,41 @@ from readwise.model import (
     UpdateRequest,
     UpdateResponse,
 )
+
+
+def _append_query_param(url: str, param_name: str, param_value: str) -> str:
+    """Safely append a query parameter to a URL.
+
+    Handles both URLs with and without existing query parameters.
+
+    Args:
+        url: Base URL
+        param_name: Query parameter name
+        param_value: Query parameter value (will be URL-encoded)
+
+    Returns:
+        URL with appended/updated query parameter
+
+    Examples:
+        _append_query_param("https://example.com/article", "source", "rwreader")
+        # Returns: "https://example.com/article?source=rwreader"
+
+        _append_query_param("https://example.com/article?id=123", "source", "rwreader")
+        # Returns: "https://example.com/article?id=123&source=rwreader"
+    """
+    parsed = urlparse(url)
+    query_params = parse_qs(parsed.query, keep_blank_values=True)
+
+    # parse_qs returns lists for values, so we need to handle that
+    query_params[param_name] = [param_value]
+
+    # Reconstruct the query string
+    new_query = urlencode(query_params, doseq=True)
+
+    # Reconstruct the URL
+    return urlunparse(
+        (parsed.scheme, parsed.netloc, parsed.path, parsed.params, new_query, parsed.fragment)
+    )
 
 
 class ReadwiseReader:
@@ -135,14 +171,83 @@ class ReadwiseReader:
             return response.results[0]
         return None
 
-    def save_document(self, url: str) -> tuple[bool, PostResponse]:
+    def save_document(  # noqa: PLR0913
+        self,
+        url: str,
+        html: str | None = None,
+        title: str | None = None,
+        author: str | None = None,
+        summary: str | None = None,
+        published_date: str | None = None,
+        image_url: str | None = None,
+        location: str | None = None,
+        category: str | None = None,
+        saved_using: str | None = None,
+        tags: list[str] | None = None,
+        notes: str | None = None,
+        should_clean_html: bool = False,
+    ) -> tuple[bool, PostResponse]:
         """Save a document to Readwise Reader.
 
+        Args:
+            url: Document URL (required). Can include query parameters.
+            html: Custom HTML content to save. If provided, Readwise uses this
+                  instead of scraping the URL. Optional.
+            title: Override document title. Optional.
+            author: Override document author. Optional.
+            summary: Document summary/description. Optional.
+            published_date: ISO 8601 formatted publication date. Optional.
+            image_url: Cover/thumbnail image URL. Optional.
+            location: Initial location in Readwise. One of: "new", "later",
+                      "archive", "feed". Optional, defaults to "new".
+            category: Document type. One of: "article", "email", "rss",
+                      "highlight", "note", "pdf", "epub", "tweet", "video".
+                      Optional.
+            saved_using: String identifying the source/tool that saved this.
+                         Example: "rwreader-html-redownload". Optional.
+            tags: List of tag strings to apply. Optional.
+            notes: Top-level document note. Optional.
+            should_clean_html: Whether Readwise should auto-clean the provided HTML.
+                              Only used if html is provided. Defaults to False.
+
         Returns:
-            int: Status code of 201 or 200 if document already exist.
-            PostResponse: An object containing ID and Reader URL of the saved document.
+            Tuple of (success: bool, response: PostResponse)
+            - success: True if document was saved successfully
+            - response: PostResponse object with document_id and reader_url
+
+        Raises:
+            ReadwiseAuthenticationError: If authentication fails
+            ReadwiseServerError: If Readwise server returns an error
         """
-        return self._make_post_request(payload=PostRequest(url=url))
+        payload_dict = {"url": url}
+
+        # Add optional fields only if provided
+        if html is not None:
+            payload_dict["html"] = html
+            payload_dict["should_clean_html"] = should_clean_html
+
+        if title is not None:
+            payload_dict["title"] = title
+        if author is not None:
+            payload_dict["author"] = author
+        if summary is not None:
+            payload_dict["summary"] = summary
+        if published_date is not None:
+            payload_dict["published_date"] = published_date
+        if image_url is not None:
+            payload_dict["image_url"] = image_url
+        if location is not None:
+            payload_dict["location"] = location
+        if category is not None:
+            payload_dict["category"] = category
+        if saved_using is not None:
+            payload_dict["saved_using"] = saved_using
+        if tags is not None:
+            payload_dict["tags"] = tags
+        if notes is not None:
+            payload_dict["notes"] = notes
+
+        return self._make_post_request(payload=PostRequest(**payload_dict))
 
     def _make_delete_request(self, payload: DeleteRequest) -> tuple[bool, DeleteResponse]:
         """Make a DELETE request to the Readwise API."""

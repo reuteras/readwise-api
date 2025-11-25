@@ -78,8 +78,10 @@ class PostRequest(BaseModel):
             Represents the initial location of the document (previously called triage_status). Note: if you try to use
             a location the user doesn't have enabled in their settings, this value will be set to their default
             location.
+        category (str | None): Document type. One of: article, email, rss, highlight, note, pdf, epub, tweet, video.
         saved_using (str | None): This value represents the source of the document
         tags (Optional[list[str]]): A list of strings containing tags, example: ["tag1", "tag2"]
+        notes (str | None): Top-level document note.
     """
 
     url: str
@@ -91,8 +93,10 @@ class PostRequest(BaseModel):
     published_date: str | None = None
     image_url: str | None = None
     location: str | None = None
+    category: str | None = None
     saved_using: str | None = None
     tags: list[str] | None = None
+    notes: str | None = None
 
 
 class PostResponse(BaseModel):
