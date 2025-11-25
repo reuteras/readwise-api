@@ -1,8 +1,11 @@
 [project]
 name = "readwise-api"
-version = "0.3.0"
+version = "0.4.0"
 description = "An unofficial Python client for the Readwise Reader API."
-authors = [{ name = "Florian Schäfer", email = "florian.joh.schaefer@gmail.com" }]
+authors = [
+    { name = "Florian Schäfer", email = "florian.joh.schaefer@gmail.com" },
+    { name = "Peter Reuterås", email = "peter@reuteras.net" },
+]
 requires-python = ">=3.11, <4"
 readme = "README.md"
 license = "MIT"
