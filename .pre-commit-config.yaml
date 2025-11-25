@@ -20,6 +20,8 @@ repos:
     rev: v0.13.2
     hooks:
       - id: ruff
+      - id: ruff-format
+        args: ["--fix"]
   - repo: https://github.com/editorconfig-checker/editorconfig-checker.python
     rev: 3.4.0
     hooks:
@@ -30,3 +32,12 @@ repos:
     hooks:
       - id: uv-secure
         language_version: python3.13
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.21.2
+    hooks:
+      - id: gitleaks
+  - repo: https://github.com/pre-commit/mirrors-prettier
+    rev: v3.1.0
+    hooks:
+      - id: prettier
+        types_or: [markdown]
