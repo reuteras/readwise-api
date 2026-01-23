@@ -36,7 +36,6 @@ class Document(BaseModel):
     saved_at: str
     last_moved_at: str
     reading_progress: float | None
-    notes: str
     first_opened_at: str | None
     last_opened_at: str | None
 
@@ -60,8 +59,8 @@ class PostRequest(BaseModel):
     """A POST request for the Readwise API to save documents to Reader.
 
     Fields:
-        url (str): The document's unique URL. If you don't have one, you can provide a made up value such as
-            https://yourapp.com#document1
+        url (str | None): The document's unique URL. Required unless html is provided. If you don't have one,
+            you can provide a made up value such as https://yourapp.com#document1
         html (str | None): The document's content, in valid html (see examples). If you don't provide this, we will
             try to scrape the URL you provided to fetch html from the open web.
         should_clean_html  (Optional[bool]): Only valid when html is provided. Pass true to have us automatically
@@ -84,7 +83,7 @@ class PostRequest(BaseModel):
         notes (str | None): Top-level document note.
     """
 
-    url: str
+    url: str | None = None
     html: str | None = None
     should_clean_html: bool | None = None
     title: str | None = None

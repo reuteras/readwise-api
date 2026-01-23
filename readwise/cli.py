@@ -2,6 +2,7 @@
 
 import json
 import os
+import sys
 from datetime import datetime
 from typing import Annotated
 
@@ -21,19 +22,24 @@ def list(
 ) -> None:
     """List documents.
 
-    Params:
-        location (Optional[str]): The document's location, could be one of: new, later, shortlist, archive, feed
-        category (Optional[str]): The document's category, could be one of: article, email, rss, highlight, note, pdf,
+    Args:
+        location: The document's location, could be one of: new, later, shortlist, archive, feed
+        category: The document's category, could be one of: article, email, rss, highlight, note, pdf,
             epub, tweet, video
-        updated_after (Optional[datetime]): Filter documents updated after a certain date.
-        n (Optional[int]): Limits the number of documents to a maximum (100 by default).
+        updated_after: Filter documents updated after a certain date.
+        n: Limits the number of documents to a maximum (1-100). If not specified, returns all documents.
 
     Usage:
         $ readwise list new
+        $ readwise list --location archive --number 50
     """
     reader = ReadwiseReader(token=os.getenv(key="READWISE_TOKEN"))
 
-    documents = reader.get_documents(location=location, category=category, updated_after=updated_after)[:n]
+    if n is not None and not (1 <= n <= 100):
+        print(f"Error: --number must be between 1 and 100, got {n}")
+        sys.exit(1)
+
+    documents = reader.get_documents(location=location, category=category, updated_after=updated_after, limit=n)
     fields_to_include: set[str] = {
         "title",
         "id",
@@ -64,18 +70,94 @@ def get(id: str) -> None:
 
 
 @app.command()
-def save(url: str) -> None:
+def save(
+    url: Annotated[str | None, typer.Option("--url", "-u")] = None,
+    html_file: Annotated[str | None, typer.Option("--html-file", "-f")] = None,
+    title: Annotated[str | None, typer.Option("--title", "-t")] = None,
+    author: Annotated[str | None, typer.Option("--author", "-a")] = None,
+    tags: Annotated[str | None, typer.Option("--tags", "-g")] = None,
+) -> None:
     """Save a document to Reader.
 
-    Params:
-        url (str): URL to the document from where it will be scraped by Readwise.
+    Either --url or --html-file must be provided.
+
+    Args:
+        url: URL to the document from where it will be scraped by Readwise.
+        html_file: Path to HTML file to upload instead of scraping a URL.
+        title: Override document title.
+        author: Override document author.
+        tags: Comma-separated list of tags to apply.
 
     Usage:
-        $ readwise save "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+        $ readwise save --url "https://example.com/article"
+        $ readwise save --html-file content.html --title "My Article" --tags "tag1,tag2"
     """
     reader = ReadwiseReader(token=os.getenv(key="READWISE_TOKEN"))
-    success, document_info = reader.save_document(url=url)
-    if success and document_info is not None:
-        print(f"Document saved with ID {document_info.id!r} at {document_info.url!r}.")
-    else:
-        print(f"Failed to save document from {url!r}. Please check the URL and try again.")
+
+    # Parse HTML file if provided
+    html_content = None
+    if html_file:
+        try:
+            with open(html_file, "r", encoding="utf-8") as f:
+                html_content = f.read()
+        except FileNotFoundError:
+            print(f"Error: HTML file '{html_file}' not found.")
+            sys.exit(1)
+        except Exception as e:
+            print(f"Error reading HTML file: {e}")
+            sys.exit(1)
+
+    # Validate that either url or html_file is provided
+    if not url and not html_file:
+        print("Error: Either --url or --html-file must be provided.")
+        sys.exit(1)
+
+    # Parse tags if provided
+    tag_list = None
+    if tags:
+        tag_list = [tag.strip() for tag in tags.split(",") if tag.strip()]
+
+    try:
+        success, document_info = reader.save_document(
+            url=url,
+            html=html_content,
+            title=title,
+            author=author,
+            tags=tag_list,
+        )
+        if success and document_info is not None:
+            print(f"Document saved with ID {document_info.id!r} at {document_info.url!r}.")
+        else:
+            print("Failed to save document. Please check your parameters and try again.")
+    except ValueError as e:
+        print(f"Error: {e}")
+        sys.exit(1)
+
+
+@app.command()
+def auth_check() -> None:
+    """Check if the Readwise token is valid.
+
+    Uses the READWISE_TOKEN environment variable.
+
+    Exit codes:
+        0: Token is valid
+        1: Token is invalid or missing
+
+    Usage:
+        $ readwise auth-check
+    """
+    try:
+        reader = ReadwiseReader(token=os.getenv(key="READWISE_TOKEN"))
+        if reader.validate_token():
+            print("Token is valid.")
+            sys.exit(0)
+        else:
+            print("Token is invalid.")
+            sys.exit(1)
+    except ValueError as e:
+        print(f"Error: {e}")
+        sys.exit(1)
+    except Exception as e:
+        print(f"Unexpected error: {e}")
+        sys.exit(1)

@@ -1,6 +1,6 @@
 [project]
 name = "readwise-api"
-version = "0.4.0"
+version = "0.5.0"
 description = "An unofficial Python client for the Readwise Reader API."
 authors = [
     { name = "Florian Schäfer", email = "florian.joh.schaefer@gmail.com" },
@@ -23,6 +23,7 @@ readwise = "readwise.__main__:app"
 dev = [
     "mypy>=1.3.0,<2",
     "pylint>=3.3.4",
+    "pytest>=7.0.0",
     "ruff>=0.0.270",
     "types-requests>=2.31.0.1,<3",
 ]
