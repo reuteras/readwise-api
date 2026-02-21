@@ -39,7 +39,7 @@ def validate_token(token: str | None = None) -> bool:
     return reader.validate_token(token)
 
 
-def get_documents(
+def get_documents(  # noqa: PLR0913
     location: str | None = None,
     category: str | None = None,
     updated_after: datetime | None = None,

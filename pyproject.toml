@@ -82,5 +82,8 @@ docstring-code-format = false
 # enabled.
 docstring-code-line-length = "dynamic"
 
+[tool.ruff.lint.per-file-ignores]
+"tests/**/*.py" = ["PLR2004"]
+
 [tool.ruff.lint.pydocstyle]
 convention="google"

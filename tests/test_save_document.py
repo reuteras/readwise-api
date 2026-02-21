@@ -1,5 +1,6 @@
 """Tests for save_document, token validation, document listing, and error handling in the Readwise API client."""
 
+import os
 from http import HTTPStatus
 from typing import cast
 from unittest.mock import MagicMock, patch
@@ -10,12 +11,12 @@ from typer.testing import CliRunner
 from readwise.api import (
     ReadwiseAuthenticationError,
     ReadwiseClientError,
-    ReadwiseError,
     ReadwiseRateLimitError,
     ReadwiseReader,
     ReadwiseServerError,
 )
-from readwise.model import DeleteResponse, Document, GetResponse, UpdateResponse
+from readwise.cli import app
+from readwise.model import DeleteResponse, Document, GetResponse, UpdateRequest, UpdateResponse
 
 
 class TestSaveDocument:
@@ -613,7 +614,6 @@ class TestUpdateDocumentLocation:
             assert isinstance(response, UpdateResponse)
             assert response.success is True
             assert response.message == "Document updated successfully"
-            from readwise.model import UpdateRequest
 
             expected_payload = UpdateRequest(id="doc123", location="archive")
             mock_update.assert_called_once_with(expected_payload, retry_on_429=False)
@@ -637,10 +637,9 @@ class TestUpdateDocumentLocation:
             mock_response = (True, UpdateResponse(success=True, message="Document updated successfully"))
             mock_update.return_value = mock_response
 
-            success, response = client.update_document_location("doc123", "archive", retry_on_429=True)
+            success, _response = client.update_document_location("doc123", "archive", retry_on_429=True)
 
             assert success is True
-            from readwise.model import UpdateRequest
 
             expected_payload = UpdateRequest(id="doc123", location="archive")
             mock_update.assert_called_once_with(expected_payload, retry_on_429=True)
@@ -728,9 +727,6 @@ class TestCLI:
 
     def test_cli_list_help(self) -> None:
         """Test that list command help works."""
-        from readwise.cli import app
-        from typer.testing import CliRunner
-
         runner = CliRunner()
         result = runner.invoke(app, ["list", "--help"])
 
@@ -741,9 +737,6 @@ class TestCLI:
 
     def test_cli_get_help(self) -> None:
         """Test that get command help works."""
-        from readwise.cli import app
-        from typer.testing import CliRunner
-
         runner = CliRunner()
         result = runner.invoke(app, ["get", "--help"])
 
@@ -752,9 +745,6 @@ class TestCLI:
 
     def test_cli_save_help(self) -> None:
         """Test that save command help works."""
-        from readwise.cli import app
-        from typer.testing import CliRunner
-
         runner = CliRunner()
         result = runner.invoke(app, ["save", "--help"])
 
@@ -765,9 +755,6 @@ class TestCLI:
 
     def test_cli_auth_check_help(self) -> None:
         """Test that auth-check command help works."""
-        from readwise.cli import app
-        from typer.testing import CliRunner
-
         runner = CliRunner()
         result = runner.invoke(app, ["auth-check", "--help"])
 
@@ -776,9 +763,6 @@ class TestCLI:
 
     def test_cli_main_help(self) -> None:
         """Test that main CLI help shows all commands."""
-        from readwise.cli import app
-        from typer.testing import CliRunner
-
         runner = CliRunner()
         result = runner.invoke(app, ["--help"])
 
@@ -790,10 +774,6 @@ class TestCLI:
 
     def test_cli_list_no_token(self) -> None:
         """Test that CLI commands fail gracefully without token."""
-        from readwise.cli import app
-        from typer.testing import CliRunner
-        import os
-
         # Remove token from environment
         old_token = os.environ.get("READWISE_TOKEN")
         if "READWISE_TOKEN" in os.environ:

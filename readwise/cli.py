@@ -35,7 +35,7 @@ def list(
     """
     reader = ReadwiseReader(token=os.getenv(key="READWISE_TOKEN"))
 
-    if n is not None and not (1 <= n <= 100):
+    if n is not None and not (1 <= n <= 100):  # noqa: PLR2004
         print(f"Error: --number must be between 1 and 100, got {n}")
         sys.exit(1)
 
@@ -98,7 +98,7 @@ def save(
     html_content = None
     if html_file:
         try:
-            with open(html_file, "r", encoding="utf-8") as f:
+            with open(html_file, encoding="utf-8") as f:
                 html_content = f.read()
         except FileNotFoundError:
             print(f"Error: HTML file '{html_file}' not found.")

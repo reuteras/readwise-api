@@ -26,6 +26,13 @@ class ReadwiseError(Exception):
     """Base exception for Readwise API errors."""
 
     def __init__(self, message: str, status_code: int | None = None, response_body: str | None = None) -> None:
+        """Initialize ReadwiseError.
+
+        Args:
+            message: Error message.
+            status_code: HTTP status code.
+            response_body: Response body text.
+        """
         super().__init__(message)
         self.status_code = status_code
         self.response_body = response_body
@@ -59,6 +66,14 @@ class ReadwiseRateLimitError(ReadwiseError):
         response_body: str | None = None,
         retry_after: int | None = None,
     ) -> None:
+        """Initialize ReadwiseRateLimitError.
+
+        Args:
+            message: Error message.
+            status_code: HTTP status code.
+            response_body: Response body text.
+            retry_after: Seconds to wait before retrying.
+        """
         super().__init__(message, status_code, response_body)
         self.retry_after = retry_after
 
@@ -111,6 +126,7 @@ class ReadwiseReader:
     """
 
     URL_BASE: Final[str] = "https://readwise.io/api/v3"
+    _MAX_LIMIT: Final[int] = 100
 
     def __init__(self, token: str | None = None) -> None:
         """Initialize the client with a token.
@@ -182,14 +198,14 @@ class ReadwiseReader:
                     retry_after=retry_after_seconds,
                 )
 
-        if http_response.status_code >= 500:
+        if http_response.status_code >= HTTPStatus.INTERNAL_SERVER_ERROR:
             raise ReadwiseServerError(
                 f"Server error: {http_response.status_code} {http_response.text}",
                 status_code=http_response.status_code,
                 response_body=http_response.text,
             )
-        elif http_response.status_code >= 400:
-            if http_response.status_code in (401, 403):
+        elif http_response.status_code >= HTTPStatus.BAD_REQUEST:
+            if http_response.status_code in (HTTPStatus.UNAUTHORIZED, HTTPStatus.FORBIDDEN):
                 raise ReadwiseAuthenticationError(
                     f"Authentication failed: {http_response.status_code} {http_response.text}",
                     status_code=http_response.status_code,
@@ -201,7 +217,7 @@ class ReadwiseReader:
                     status_code=http_response.status_code,
                     response_body=http_response.text,
                 )
-        elif http_response.status_code >= 200:
+        elif http_response.status_code >= HTTPStatus.OK:
             return GetResponse(**http_response.json())
         else:
             raise ReadwiseError(
@@ -238,7 +254,7 @@ class ReadwiseReader:
         if http_response.status_code in (HTTPStatus.OK, HTTPStatus.CREATED):
             try:
                 return (True, PostResponse(**http_response.json()))
-            except ValueError as e:
+            except ValueError:
                 # If JSON parsing/validation fails, return error tuple for backward compatibility
                 return (False, None)
 
@@ -246,7 +262,7 @@ class ReadwiseReader:
         # Only raise exceptions for rate limits when retry is disabled
         return (False, None)
 
-    def get_documents(
+    def get_documents(  # noqa: PLR0912, PLR0913
         self,
         location: str | None = None,
         category: str | None = None,
@@ -301,8 +317,8 @@ class ReadwiseReader:
         if tag:
             params["tag"] = tag
         if limit is not None:
-            if not (1 <= limit <= 100):
-                raise ValueError(f"Parameter 'limit' must be between 1 and 100, got {limit}")
+            if not (1 <= limit <= self._MAX_LIMIT):
+                raise ValueError(f"Parameter 'limit' must be between 1 and {self._MAX_LIMIT}, got {limit}")
             params["limit"] = limit
         if page_cursor:
             params["pageCursor"] = page_cursor
@@ -324,7 +340,7 @@ class ReadwiseReader:
 
         return results
 
-    def iter_documents(
+    def iter_documents(  # noqa: PLR0913
         self,
         location: str | None = None,
         category: str | None = None,
@@ -535,7 +551,7 @@ class ReadwiseReader:
                 if http_response.status_code == HTTPStatus.NO_CONTENT:
                     return (True, DeleteResponse(success=True, message="Document deleted successfully"))
                 return (True, DeleteResponse(**http_response.json()))
-            except ValueError as e:
+            except ValueError:
                 # If JSON parsing/validation fails, return error tuple for backward compatibility
                 return (False, None)
 
