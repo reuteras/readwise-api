@@ -39,7 +39,7 @@ def validate_token(token: str | None = None) -> bool:
     return reader.validate_token(token)
 
 
-def get_documents(  # noqa: PLR0913
+def get_documents(  # noqa: PLR0913, PLR0917
     location: str | None = None,
     category: str | None = None,
     updated_after: datetime | None = None,
@@ -95,7 +95,7 @@ def get_document_by_id(id: str, retry_on_429: bool = False) -> Document | None:
     return reader.get_document_by_id(id=id, retry_on_429=retry_on_429)
 
 
-def save_document(  # noqa: PLR0913
+def save_document(  # noqa: PLR0913, PLR0917
     url: str | None = None,
     html: str | None = None,
     title: str | None = None,

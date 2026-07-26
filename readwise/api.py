@@ -262,7 +262,7 @@ class ReadwiseReader:
         # Only raise exceptions for rate limits when retry is disabled
         return (False, None)
 
-    def get_documents(  # noqa: PLR0912, PLR0913
+    def get_documents(  # noqa: PLR0912, PLR0913, PLR0917
         self,
         location: str | None = None,
         category: str | None = None,
@@ -340,7 +340,7 @@ class ReadwiseReader:
 
         return results
 
-    def iter_documents(  # noqa: PLR0913
+    def iter_documents(  # noqa: PLR0913, PLR0917
         self,
         location: str | None = None,
         category: str | None = None,
@@ -423,7 +423,7 @@ class ReadwiseReader:
             return response.results[0]
         return None
 
-    def save_document(  # noqa: PLR0913
+    def save_document(  # noqa: PLR0913, PLR0917
         self,
         url: str | None = None,
         html: str | None = None,
