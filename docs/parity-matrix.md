@@ -4,17 +4,19 @@ This document tracks the current implementation status against the public Readwi
 
 ## Repository Audit Summary
 
-**Base API URL(s) used:** `https://readwise.io/api/v3`  
-**Authentication header format:** `"Authorization": f"Token {self.token}"`  
+**Base API URL(s) used:** `https://readwise.io/api/v3`
+**Authentication header format:** `"Authorization": f"Token {self.token}"`
 **Token environment variable:** `READWISE_TOKEN`
 
 **HTTP endpoints currently called:**
+
 - `GET /list/` - Fetch documents with pagination and filtering
 - `POST /save/` - Save new documents with optional metadata
 - `DELETE /delete/{id}/` - Delete documents by ID
 - `PATCH /update/{id}/` - Update document location/status
 
 **Public Python functions:**
+
 - `get_documents(location?, category?, updated_after?, withHtmlContent?)` - Returns list[Document]
 - `get_document_by_id(id)` - Returns Document | None
 - `save_document(url, html?, title?, author?, summary?, published_date?, image_url?, location?, category?, saved_using?, tags?, notes?, should_clean_html?)` - Returns tuple[bool, PostResponse | None]
@@ -23,6 +25,7 @@ This document tracks the current implementation status against the public Readwi
 - `search_document(url)` - Returns tuple[bool, dict | Document]
 
 **CLI commands:**
+
 - `readwise list [location] [--category] [--updated-after] [--number]` - Lists documents as JSON
 - `readwise get <id>` - Gets single document by ID as JSON
 - `readwise save <url>` - Saves document from URL
@@ -31,15 +34,15 @@ This document tracks the current implementation status against the public Readwi
 
 ## Parity Matrix
 
-| Feature | Endpoint | Python API | CLI | Supported | Notes |
-|-------|----------|------------|-----|-----------|------|
-| **Token Validation** | `GET /auth/` | ✅ | ✅ | Yes | Implemented `validate_token()` and `readwise auth-check` with tests |
-| **List Documents** | `GET /list/` | ✅ | ✅ | Yes | Full support for all API parameters: location, category, updated_after, tag, limit, page_cursor, withHtmlContent, withRawSourceUrl; auto-pagination; iter_documents() generator added |
-| **Get Document by ID** | `GET /list/?id={id}` | ✅ | ✅ | Yes | Official API parity - uses documented 'id' parameter on LIST endpoint |
-| **Save Document** | `POST /save/` | ✅ | ✅ | Yes | Full metadata support; validation for required params; CLI with --html-file, --title, --author, --tags flags; consistent error handling with retry_on_429 option; comprehensive CLI tests |
-| **Delete Document** | `DELETE /delete/{id}/` | ✅ | ❌ | Yes | CLI support via module functions |
-| **Update Document** | `PATCH /update/{id}/` | ✅ | ❌ | Partial | Only location updates; no CLI command |
-| **Search by URL** | `GET /list/?url={url}` | ✅ | ❌ | Yes | Convenience function, not official endpoint |
+| Feature                | Endpoint               | Python API | CLI | Supported | Notes                                                                                                                                                                                     |
+|------------------------|------------------------|------------|-----|-----------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **Token Validation**   | `GET /auth/`           | ✅          | ✅   | Yes       | Implemented `validate_token()` and `readwise auth-check` with tests                                                                                                                       |
+| **List Documents**     | `GET /list/`           | ✅          | ✅   | Yes       | Full support for all API parameters: location, category, updated_after, tag, limit, page_cursor, withHtmlContent, withRawSourceUrl; auto-pagination; iter_documents() generator added     |
+| **Get Document by ID** | `GET /list/?id={id}`   | ✅          | ✅   | Yes       | Official API parity - uses documented 'id' parameter on LIST endpoint                                                                                                                     |
+| **Save Document**      | `POST /save/`          | ✅          | ✅   | Yes       | Full metadata support; validation for required params; CLI with --html-file, --title, --author, --tags flags; consistent error handling with retry_on_429 option; comprehensive CLI tests |
+| **Delete Document**    | `DELETE /delete/{id}/` | ✅          | ❌   | Yes       | CLI support via module functions                                                                                                                                                          |
+| **Update Document**    | `PATCH /update/{id}/`  | ✅          | ❌   | Partial   | Only location updates; no CLI command                                                                                                                                                     |
+| **Search by URL**      | `GET /list/?url={url}` | ✅          | ❌   | Yes       | Convenience function, not official endpoint                                                                                                                                               |
 
 ## Test Coverage Summary
 

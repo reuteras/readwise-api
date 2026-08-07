@@ -11,6 +11,7 @@ This release brings the Readwise API client to **complete parity with the offici
 ### ✨ New Features
 
 #### 🔐 Authentication & Token Validation
+
 - **`validate_token(token=None) -> bool`**
   - Validates Readwise API tokens against the official auth endpoint
   - Supports both explicit token parameter and `READWISE_TOKEN` environment variable
@@ -47,6 +48,7 @@ This release brings the Readwise API client to **complete parity with the offici
   - `--number` / `-n`: Limit result count (1-100)
 
 #### 🎯 Document Retrieval (Phase 3)
+
 - **Confirmed `get_document_by_id()` official API support:**
   - Uses documented LIST endpoint with `id` parameter
   - Returns exactly one document or None
@@ -54,6 +56,7 @@ This release brings the Readwise API client to **complete parity with the offici
   - Full test coverage with comprehensive error scenarios
 
 #### 💾 Document Saving (Phase 4)
+
 - **Enhanced `save_document()` with complete metadata support:**
   - `url` OR `html` required (one must be provided)
   - Full metadata fields: `title`, `author`, `summary`, `published_date`, `image_url`
@@ -75,6 +78,7 @@ This release brings the Readwise API client to **complete parity with the offici
   - Clear error messages for invalid inputs
 
 #### 🛡️ Error Handling & Rate Limiting (Phase 5)
+
 - **Structured exception hierarchy:**
   - `ReadwiseError`: Base exception class
   - `ReadwiseAuthenticationError`: 401/403 authentication failures
@@ -95,6 +99,7 @@ This release brings the Readwise API client to **complete parity with the offici
   - Detailed error messages with response bodies
 
 #### 📖 Module-Level Convenience Functions
+
 - **`validate_token()`** - Direct token validation
 - **`get_documents()`** - Direct document listing
 - **`get_document_by_id()`** - Direct document retrieval
@@ -104,6 +109,7 @@ This release brings the Readwise API client to **complete parity with the offici
 - **`search_document()`** - Direct document search
 
 Example usage without creating a client instance:
+
 ```python
 import readwise
 
@@ -116,6 +122,7 @@ success, response = readwise.save_document("https://example.com")
 ### 🧪 Testing & Quality Assurance
 
 #### Comprehensive Test Suite (57 tests)
+
 - **100% Public API Coverage:** All 8 public methods fully tested
 - **100% CLI Coverage:** All 4 CLI commands tested for basic functionality
 - **Error Scenario Coverage:** All exception types and edge cases
@@ -123,7 +130,8 @@ success, response = readwise.save_document("https://example.com")
 - **Rate Limiting:** Retry enabled/disabled scenarios
 - **No External Dependencies:** All tests use mocks, never call real APIs
 
-#### Test Categories:
+#### Test Categories
+
 - **API Functionality:** Core feature testing
 - **Parameter Validation:** Input validation and error handling
 - **Error Handling:** Exception scenarios and recovery
@@ -134,6 +142,7 @@ success, response = readwise.save_document("https://example.com")
 ### 📚 Documentation & Type Safety
 
 #### Complete README Overhaul
+
 - **Installation Guide:** Clear setup instructions
 - **Authentication:** Token setup and validation
 - **API Reference:** All methods with examples
@@ -143,6 +152,7 @@ success, response = readwise.save_document("https://example.com")
 - **API Coverage:** Clear ✅/📋 status indicators
 
 #### Type Safety & Developer Experience
+
 - **100% MyPy Compliance:** Zero type errors
 - **Complete Type Hints:** All parameters and return values typed
 - **IDE Support:** Full autocomplete and validation
@@ -150,6 +160,7 @@ success, response = readwise.save_document("https://example.com")
 - **Exception Documentation:** Clear error conditions and handling
 
 ### 🔄 Backward Compatibility
+
 - **Zero Breaking Changes:** All existing code continues to work
 - **Enhanced Functionality:** New features are additive
 - **Optional Parameters:** New features don't affect existing usage
@@ -158,18 +169,21 @@ success, response = readwise.save_document("https://example.com")
 ### 🏗️ Architecture Improvements
 
 #### Error Handling Architecture
+
 - Centralized exception hierarchy
 - Consistent error message formatting
 - Proper HTTP status code mapping
 - Retry logic abstraction
 
 #### API Client Architecture
+
 - Modular request/response handling
 - Configurable retry behavior
 - Clean separation of concerns
 - Type-safe data models
 
 #### CLI Architecture
+
 - Typer-based command structure
 - Comprehensive option validation
 - Helpful error messages
@@ -178,17 +192,20 @@ success, response = readwise.save_document("https://example.com")
 ### 📊 Performance & Reliability
 
 #### Rate Limiting Intelligence
+
 - Respects API limits (20 requests/minute standard, 50 for save/update)
 - Automatic retry with proper backoff
 - Configurable retry behavior
 - Clear rate limit error information
 
 #### Memory Efficiency
+
 - `iter_documents()` for large datasets
 - Pagination support for controlled memory usage
 - Streaming document processing capability
 
 #### Error Recovery
+
 - Comprehensive error classification
 - Detailed error context and debugging information
 - Graceful failure handling
@@ -197,6 +214,7 @@ success, response = readwise.save_document("https://example.com")
 ### 🔍 Implementation Details
 
 #### API Endpoint Coverage
+
 - **Authentication:** `GET /api/v2/auth/`
 - **Document List:** `GET /api/v3/list/` (full parameter support)
 - **Document Get:** `GET /api/v3/list/?id={id}`
@@ -205,15 +223,17 @@ success, response = readwise.save_document("https://example.com")
 - **Document Delete:** `DELETE /api/v3/delete/{id}/`
 
 #### CLI Command Matrix
-| Command | Description | Options |
-|---------|-------------|---------|
-| `auth-check` | Validate API token | None |
-| `list` | List documents with filtering | `--location`, `--category`, `--updated-after`, `--number` |
-| `get <id>` | Get single document | None |
-| `save` | Save document from URL or HTML | `--url`, `--html-file`, `--title`, `--author`, `--tags` |
+
+| Command      | Description                    | Options                                                   |
+|--------------|--------------------------------|-----------------------------------------------------------|
+| `auth-check` | Validate API token             | None                                                      |
+| `list`       | List documents with filtering  | `--location`, `--category`, `--updated-after`, `--number` |
+| `get <id>`   | Get single document            | None                                                      |
+| `save`       | Save document from URL or HTML | `--url`, `--html-file`, `--title`, `--author`, `--tags`   |
 
 #### Exception Hierarchy
-```
+
+```text
 ReadwiseError
 ├── ReadwiseAuthenticationError (401/403)
 ├── ReadwiseClientError (4xx)
@@ -224,9 +244,11 @@ ReadwiseError
 ### 🎯 Migration Guide
 
 #### For Existing Users
+
 No migration required! All existing code continues to work unchanged.
 
 #### New Features Available
+
 ```python
 # Before (still works)
 reader = ReadwiseReader()
@@ -245,18 +267,21 @@ readwise list --location archive --number 25
 ### 🐛 Bug Fixes & Improvements
 
 #### Reliability
+
 - Robust error handling prevents silent failures
 - Comprehensive input validation catches issues early
 - Proper HTTP status code interpretation
 - Network error recovery and retry logic
 
 #### Developer Experience
+
 - Clear error messages with actionable information
 - Comprehensive documentation with examples
 - Type safety prevents runtime errors
 - IDE integration with autocomplete and validation
 
 #### Performance
+
 - Efficient pagination prevents memory issues
 - Configurable rate limiting prevents API throttling
 - Streaming document processing for large datasets
@@ -264,12 +289,14 @@ readwise list --location archive --number 25
 ### 📋 Known Limitations & Future Work
 
 #### Not Implemented (Outside Reader API Scope)
+
 - Webhook functionality (available in separate API)
 - Tag management endpoints (not in Reader API)
 - Bulk operations (not supported by API)
 - Document export features (different API)
 
 #### API Constraints
+
 - Rate limits: 20 requests/minute (50 for save/update)
 - Document limits: 100 per page maximum
 - Tag filtering: Up to 5 tags per request

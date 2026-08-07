@@ -10,6 +10,7 @@ Bring the repository reuteras/readwise-api to parity with the public Readwise Re
 - Tests cover all public-facing functionality
 
 Codex should treat:
+
 - the repository source code as the implementation baseline
 - the public Readwise Reader API documentation as the specification
 
@@ -39,7 +40,7 @@ Codex should treat:
 Create docs/parity-matrix.md with the following table structure:
 
 | Feature | Endpoint | Python API | CLI | Supported | Notes |
-|-------|----------|------------|-----|-----------|------|
+| ------- | -------- | ---------- | --- | --------- | ----- |
 
 Populate this table by inspecting the code, not by trusting the README.
 
@@ -49,7 +50,7 @@ Populate this table by inspecting the code, not by trusting the README.
 
 ### Specification (public Reader API)
 
-- Endpoint: GET https://readwise.io/api/v2/auth/
+- Endpoint: GET <https://readwise.io/api/v2/auth/>
 - Behavior:
   - HTTP 204 → token is valid
   - HTTP 401 or 403 → token is invalid
@@ -61,6 +62,7 @@ Implement:
 - validate_token(token: str | None = None) -> bool
 
 Rules:
+
 - Use READWISE_TOKEN environment variable if token is not provided
 - Return True on HTTP 204
 - Return False on HTTP 401 or 403
@@ -73,6 +75,7 @@ Add command:
 - readwise auth-check
 
 Exit codes:
+
 - 0 → token valid
 - 1 → token invalid
 
@@ -106,6 +109,7 @@ Extend or confirm:
 - get_documents(...)
 
 Optional additions (only if endpoint supports them):
+
 - updated_after parameter
 - pagination via limit and cursor
 - iter_documents(...) generator that auto-paginates
@@ -115,6 +119,7 @@ Do not implement undocumented filters or parameters.
 ### CLI
 
 Ensure existing commands are accurate, for example:
+
 - readwise list new
 - readwise list later
 - readwise list archive
@@ -133,12 +138,14 @@ Do not add flags that are not backed by the API.
 ### Audit requirement
 
 Determine whether:
+
 - There is a documented Reader API endpoint to fetch a document by ID
 - OR the current implementation is a client-side helper built on top of listing
 
 ### Action
 
 If no official endpoint exists:
+
 - Keep get_document_by_id as a helper
 - Clearly document it as a convenience function, not API parity
 
@@ -165,16 +172,19 @@ Extend save_document to support (only if confirmed supported by the endpoint):
   - notes
 
 Rules:
+
 - Preserve backward compatibility:
-  - save_document("https://example.com") must continue to work
+  - save_document("<https://example.com>") must continue to work
 - Validate invalid parameter combinations early
 
 ### CLI
 
 Existing command:
+
 - readwise save <url>
 
 Optional flags (only if endpoint supports them):
+
 - --html-file
 - --title
 - --author
@@ -204,6 +214,7 @@ Optional flags (only if endpoint supports them):
 3. Do not auto-retry requests by default.
 
 Optional:
+
 - Provide retry_on_429 flag for advanced usage
 
 ### Tests
@@ -244,6 +255,7 @@ Update README to include:
 - No tests may call the real Readwise API
 
 Recommended tools:
+
 - pytest
 - responses or requests-mock (use what the repo already prefers)
 

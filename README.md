@@ -282,6 +282,7 @@ for url in urls:
 ## API Coverage
 
 ### ✅ Fully Supported
+
 - **Authentication**: Token validation
 - **Document Listing**: Full filtering, pagination, iteration
 - **Document Retrieval**: By ID and URL search
@@ -292,6 +293,7 @@ for url in urls:
 - **Error Handling**: Structured exceptions with detailed information
 
 ### 📋 Known Limitations
+
 - Webhook functionality not implemented (not in Reader API)
 - Tag management endpoints not implemented
 - Bulk operations not available in API

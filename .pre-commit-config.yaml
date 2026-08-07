@@ -30,11 +30,18 @@ repos:
     rev: v8.30.0
     hooks:
       - id: gitleaks
-  - repo: https://github.com/pre-commit/mirrors-prettier
-    rev: v4.0.0-alpha.8
+  - repo: https://github.com/igorshubovych/markdownlint-cli
+    rev: v0.49.1
     hooks:
-      - id: prettier
-        types_or: [markdown]
+      - id: markdownlint
+  - repo: local
+    hooks:
+      - id: markdown-table-formatter
+        name: markdown-table-formatter
+        entry: npx markdown-table-formatter
+        language: node
+        types: [markdown]
+        additional_dependencies: ["markdown-table-formatter@1.6.1"]
   - repo: https://github.com/zizmorcore/zizmor-pre-commit
     rev: v1.29.0
     hooks:
