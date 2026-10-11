@@ -124,10 +124,14 @@ class DeleteResponse(BaseModel):
 
 
 class UpdateRequest(BaseModel):
-    """A request to update a document's location in Readwise Reader."""
+    """A request to update a document in Readwise Reader.
+
+    Fields left as None are not sent, so the document keeps its current value.
+    """
 
     id: str
-    location: str
+    location: str | None = None
+    seen: bool | None = None
 
 
 class UpdateResponse(BaseModel):

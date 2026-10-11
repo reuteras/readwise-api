@@ -645,6 +645,37 @@ class TestUpdateDocumentLocation:
             mock_update.assert_called_once_with(expected_payload, retry_on_429=True)
 
 
+class TestUpdateDocumentSeen:
+    """Test cases for the update_document_seen function."""
+
+    @pytest.fixture
+    def client(self) -> ReadwiseReader:
+        """Create a ReadwiseReader client with a test token."""
+        return ReadwiseReader(token="test-token")
+
+    @pytest.mark.parametrize("seen", [True, False])
+    def test_update_document_seen_payload(self, client: ReadwiseReader, seen: bool) -> None:
+        """The request carries only the seen flag."""
+        with patch.object(client, "_make_update_request") as mock_update:
+            mock_update.return_value = (True, UpdateResponse(success=True))
+
+            success, _response = client.update_document_seen("doc123", seen=seen)
+
+            assert success is True
+            mock_update.assert_called_once_with(UpdateRequest(id="doc123", seen=seen), retry_on_429=False)
+
+    def test_update_request_omits_unset_fields(self, client: ReadwiseReader) -> None:
+        """Unset fields are not sent, so a seen update leaves the location alone."""
+        with patch("readwise.api.requests.patch") as mock_patch:
+            mock_patch.return_value = MagicMock(status_code=200)
+
+            success, _response = client.update_document_seen("doc123")
+
+            assert success is True
+            assert mock_patch.call_args.kwargs["json"] == {"seen": True}
+            assert mock_patch.call_args.kwargs["url"].endswith("/update/doc123/")
+
+
 class TestSearchDocument:
     """Test cases for the search_document function."""
 

@@ -572,7 +572,8 @@ class ReadwiseReader:
         http_response: requests.Response = requests.patch(
             url=f"{self.URL_BASE}/update/{payload.id}/",
             headers={"Authorization": f"Token {self.token}"},
-            json=payload.model_dump(exclude={"id"}),  # Exclude id from payload as it's in the URL
+            # Exclude id (it's in the URL) and unset fields (left unchanged)
+            json=payload.model_dump(exclude={"id"}, exclude_none=True),
             timeout=30,
         )
 
@@ -646,6 +647,27 @@ class ReadwiseReader:
             return False, {"error": f"Invalid location: {location}. Must be one of: 'new', 'later', 'archive'"}
 
         payload = UpdateRequest(id=document_id, location=location)
+        return self._make_update_request(payload, retry_on_429=retry_on_429)
+
+    def update_document_seen(
+        self, document_id: str, seen: bool = True, retry_on_429: bool = False
+    ) -> tuple[bool, dict | UpdateResponse]:
+        """Mark a document as seen or unseen in Readwise Reader.
+
+        Marking a document seen sets its ``first_opened_at`` / ``last_opened_at``;
+        marking it unseen clears them.
+
+        Args:
+            document_id: ID of the document to update
+            seen: True to mark as seen, False to mark as unseen
+            retry_on_429: Whether to automatically retry when rate limited (429).
+
+        Returns:
+            Tuple of (success, response)
+                - success: Boolean indicating if the operation was successful
+                - response: Response data or error information
+        """
+        payload = UpdateRequest(id=document_id, seen=seen)
         return self._make_update_request(payload, retry_on_429=retry_on_429)
 
     def search_document(self, url: str, retry_on_429: bool = False) -> tuple[bool, dict | Document]:
