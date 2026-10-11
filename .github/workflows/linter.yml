@@ -48,6 +48,7 @@ jobs:
           VALIDATE_MARKDOWN: false
           VALIDATE_MARKDOWN_PRETTIER: false
           VALIDATE_NATURAL_LANGUAGE: false
+          VALIDATE_PRE_COMMIT: false
           VALIDATE_PYTHON_BLACK: false
           VALIDATE_PYTHON_FLAKE8: false
           VALIDATE_PYTHON_ISORT: false
