@@ -19,6 +19,7 @@ __all__: list[str] = [
     "save_document",
     "search_document",
     "update_document_location",
+    "update_document_seen",
     "validate_token",
 ]
 
@@ -194,6 +195,22 @@ def update_document_location(document_id: str, location: str) -> tuple[bool, dic
     """
     reader = ReadwiseReader()
     return reader.update_document_location(document_id=document_id, location=location)
+
+
+def update_document_seen(document_id: str, seen: bool = True) -> tuple[bool, dict | UpdateResponse]:
+    """Mark a document as seen or unseen in Readwise Reader.
+
+    Args:
+        document_id: ID of the document to update
+        seen: True to mark as seen, False to mark as unseen
+
+    Returns:
+        Tuple of (success, response)
+            - success: Boolean indicating if the operation was successful
+            - response: Response data or error information
+    """
+    reader = ReadwiseReader()
+    return reader.update_document_seen(document_id=document_id, seen=seen)
 
 
 def search_document(url: str) -> tuple[bool, dict | Document]:

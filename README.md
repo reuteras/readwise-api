@@ -69,18 +69,14 @@ emails = reader.get_documents(category="email")
 
 # Filter by date
 from datetime import datetime
+
 recent = reader.get_documents(updated_after=datetime(2024, 1, 1))
 
 # Limit results
 first_50 = reader.get_documents(limit=50)
 
 # Combine filters
-filtered = reader.get_documents(
-    location="new",
-    category="article",
-    updated_after=datetime(2024, 1, 1),
-    limit=100
-)
+filtered = reader.get_documents(location="new", category="article", updated_after=datetime(2024, 1, 1), limit=100)
 ```
 
 #### Iterate Documents (Memory Efficient)
@@ -120,14 +116,12 @@ success, response = reader.save_document(
     title="Custom Title",
     author="Custom Author",
     tags=["tag1", "tag2"],
-    category="article"
+    category="article",
 )
 
 # From HTML content
 success, response = reader.save_document(
-    html="<html><body>Custom content</body></html>",
-    title="Custom Article",
-    author="Author Name"
+    html="<html><body>Custom content</body></html>", title="Custom Article", author="Author Name"
 )
 ```
 
@@ -137,8 +131,11 @@ success, response = reader.save_document(
 # Change location
 success, response = reader.update_document_location(
     document_id="doc_id",
-    location="archive"  # new, later, or archive
+    location="archive",  # new, later, or archive
 )
+
+# Mark as seen (sets first_opened_at) or unseen (clears it)
+success, response = reader.update_document_seen(document_id="doc_id", seen=True)
 ```
 
 #### Delete Document
